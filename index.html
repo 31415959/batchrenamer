@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BatchRenamer — Preview-First Windows File Renamer</title>
+<meta name="description" content="Rename hundreds of Windows files in seconds. See every old → new name before a single file is touched. Refuses to overwrite. One-click undo, byte-for-byte.">
+<meta name="theme-color" content="#0b6bcb">
+<meta property="og:title" content="BatchRenamer — Preview-First Windows File Renamer">
+<meta property="og:description" content="See every rename before it happens. Refuses to overwrite. One-click undo.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<style>
+  :root{
+    --bg:#0d1117; --bg2:#161b22; --card:#1c2230; --line:#2a3341;
+    --fg:#e6edf3; --muted:#9aa7b8; --accent:#3b9dff; --accent2:#25c26e;
+    --warn:#ffb020; --danger:#ff5f56;
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#ffffff; --bg2:#f6f8fa; --card:#ffffff; --line:#d8dee6;
+           --fg:#1a2029; --muted:#5a6675; --accent:#0b6bcb; --accent2:#0f9d58;
+           --warn:#b06a00; --danger:#c62828; }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:980px; margin:0 auto; padding:0 20px}
+  code,kbd{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Consolas,"Liberation Mono",monospace;
+    font-size:.9em; background:var(--bg2); border:1px solid var(--line);
+    border-radius:6px; padding:.12em .42em;
+  }
+  pre{
+    background:var(--bg2); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; overflow-x:auto; font-size:14px; line-height:1.6; margin:0;
+  }
+  pre code{background:none; border:none; padding:0}
+
+  /* ---------- header ---------- */
+  header{border-bottom:1px solid var(--line); background:var(--bg2)}
+  .nav{display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 0}
+  .brand{display:flex; align-items:center; gap:10px; font-weight:700; letter-spacing:-.01em}
+  .logo{
+    width:30px;height:30px;border-radius:9px;flex:none;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:16px;
+  }
+  .nav-links{display:flex; gap:20px; font-size:14px; color:var(--muted)}
+  @media(max-width:640px){ .nav-links{display:none} }
+
+  /* ---------- hero ---------- */
+  .hero{padding:72px 0 56px; text-align:center}
+  .pill{
+    display:inline-block; font-size:13px; color:var(--accent2);
+    border:1px solid var(--accent2); border-radius:999px; padding:5px 14px;
+    margin-bottom:22px; opacity:.95;
+  }
+  h1{
+    font-size:clamp(30px,5.2vw,52px); line-height:1.14; margin:0 0 20px;
+    letter-spacing:-.025em; font-weight:800;
+  }
+  h1 em{font-style:normal; color:var(--accent)}
+  .lede{font-size:clamp(16px,2.2vw,20px); color:var(--muted); max-width:680px; margin:0 auto 34px}
+  .cta{display:flex; gap:14px; justify-content:center; flex-wrap:wrap; align-items:center}
+  .btn{
+    display:inline-block; padding:14px 28px; border-radius:10px; font-weight:700;
+    font-size:16px; border:1px solid transparent; transition:.16s;
+  }
+  .btn-primary{background:var(--accent); color:#fff}
+  .btn-primary:hover{filter:brightness(1.1); text-decoration:none}
+  .btn-ghost{border-color:var(--line); color:var(--fg)}
+  .btn-ghost:hover{background:var(--bg2); text-decoration:none}
+  .price-note{font-size:14px; color:var(--muted); margin-top:16px}
+
+  /* ---------- sections ---------- */
+  section{padding:56px 0; border-top:1px solid var(--line)}
+  h2{font-size:clamp(22px,3.4vw,32px); margin:0 0 12px; letter-spacing:-.02em}
+  .sub{color:var(--muted); margin:0 0 32px; max-width:640px}
+
+  /* ---------- mock table ---------- */
+  .mock{
+    border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; background:var(--card); font-size:14px;
+  }
+  .mock-bar{
+    background:var(--bg2); padding:10px 16px; font-size:12.5px; color:var(--muted);
+    border-bottom:1px solid var(--line); display:flex; gap:8px; align-items:center;
+  }
+  .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .dot.r{background:#ff5f56}.dot.y{background:#ffbd2e}.dot.g{background:#27c93f}
+  table{width:100%; border-collapse:collapse}
+  th,td{padding:11px 16px; text-align:left; border-bottom:1px solid var(--line)}
+  th{font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600}
+  td.mono{font-family:ui-monospace,Consolas,monospace; font-size:13px}
+  tr:last-child td{border-bottom:none}
+  .st-ok{color:var(--accent2); font-weight:600}
+  .st-no{color:var(--danger); font-weight:600}
+  .row-bad{background:rgba(255,95,86,.09)}
+  .mock-foot{
+    padding:11px 16px; font-size:13px; border-top:1px solid var(--line);
+    background:var(--bg2);
+  }
+  .mock-foot.bad{color:var(--danger)}
+  .mock-foot.good{color:var(--accent2)}
+
+  /* ---------- feature grid ---------- */
+  .grid{display:grid; gap:18px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:24px 22px;
+  }
+  .card h3{margin:0 0 10px; font-size:17px; display:flex; align-items:center; gap:9px}
+  .card p{margin:0; color:var(--muted); font-size:15px}
+  .ico{font-size:18px}
+
+  /* ---------- steps ---------- */
+  .steps{counter-reset:s; display:grid; gap:16px}
+  .step{
+    display:grid; grid-template-columns:44px 1fr; gap:16px; align-items:start;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px;
+  }
+  .step::before{
+    counter-increment:s; content:counter(s);
+    width:44px; height:44px; border-radius:12px; display:grid; place-items:center;
+    background:var(--accent); color:#fff; font-weight:800; font-size:18px;
+  }
+  .step h3{margin:2px 0 6px; font-size:16px}
+  .step p{margin:0; color:var(--muted); font-size:14.5px}
+
+  /* ---------- never list ---------- */
+  .never{list-style:none; padding:0; margin:0; display:grid; gap:12px}
+  .never li{
+    display:grid; grid-template-columns:26px 1fr; gap:12px; align-items:start;
+    padding:14px 18px; background:var(--card); border:1px solid var(--line); border-radius:10px;
+  }
+  .never .x{color:var(--danger); font-weight:800}
+  .never b{color:var(--fg)}
+
+  /* ---------- faq ---------- */
+  details{
+    border:1px solid var(--line); border-radius:10px; padding:0; margin-bottom:10px;
+    background:var(--card); overflow:hidden;
+  }
+  summary{
+    cursor:pointer; padding:16px 20px; font-weight:600; list-style:none;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+  }
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+"; color:var(--muted); font-size:20px; font-weight:400; flex:none}
+  details[open] summary::after{content:"−"}
+  details p{margin:0; padding:0 20px 18px; color:var(--muted); font-size:15px}
+
+  /* ---------- buy ---------- */
+  .buy{
+    background:linear-gradient(150deg,var(--card),var(--bg2));
+    border:1px solid var(--line); border-radius:20px; padding:44px 32px; text-align:center;
+  }
+  .buy .amount{font-size:46px; font-weight:800; letter-spacing:-.03em; margin:6px 0 4px}
+  .buy .amount small{font-size:17px; font-weight:500; color:var(--muted)}
+  .buy ul{list-style:none; padding:0; margin:24px auto 28px; max-width:440px; text-align:left;
+          display:grid; gap:9px; font-size:15px; color:var(--muted)}
+  .buy li::before{content:"✓ "; color:var(--accent2); font-weight:800}
+  .fine{font-size:13px; color:var(--muted); margin-top:18px}
+
+  footer{
+    border-top:1px solid var(--line); padding:34px 0 46px; font-size:14px; color:var(--muted);
+  }
+  .foot-row{display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; align-items:center}
+
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand"><span class="logo" aria-hidden="true">📝</span> BatchRenamer</div>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#safety">Safety</a>
+      <a href="#faq">FAQ</a>
+      <a href="#buy">Buy</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= HERO ================= -->
+<div class="wrap hero">
+  <div class="pill">v1.0.0 · Windows 10/11 · No install, no internet</div>
+  <h1>Rename hundreds of files.<br><em>See every name before it happens.</em></h1>
+  <p class="lede">
+    A bulk file renamer for Windows that shows you the complete old&nbsp;→&nbsp;new table first.
+    If two files would collide, it refuses to run. Every rename is one click away from being undone.
+  </p>
+  <div class="cta">
+    <a class="btn btn-primary" href="#buy">Get it for $9.99</a>
+    <a class="btn btn-ghost" href="#how">See how it works</a>
+  </div>
+  <p class="price-note">One-time purchase · Free updates within 1.x · 14-day refund if it won't start</p>
+</div>
+
+<!-- ================= THE PREVIEW ================= -->
+<section id="preview">
+  <div class="wrap">
+    <h2>This is what you see before anything changes</h2>
+    <p class="sub">The preview isn't a simulation. Preview and execution share the exact same code path — what's in this table is what will happen on disk.</p>
+
+    <div class="mock">
+      <div class="mock-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span style="margin-left:10px">BatchRenamer 1.0.0 — D:\Photos\2026-trip</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th style="width:44px">#</th><th>Old name</th><th>New name</th><th style="width:110px">Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="mono">IMG_2841.JPG</td><td class="mono">travel_001.jpg</td><td class="st-ok">Will rename</td></tr>
+          <tr><td>2</td><td class="mono">IMG_2842.JPG</td><td class="mono">travel_002.jpg</td><td class="st-ok">Will rename</td></tr>
+          <tr><td>3</td><td class="mono">IMG_2843.JPG</td><td class="mono">travel_003.jpg</td><td class="st-ok">Will rename</td></tr>
+          <tr><td>4</td><td class="mono">IMG_2844.JPG</td><td class="mono">travel_004.jpg</td><td class="st-ok">Will rename</td></tr>
+          <tr><td>5</td><td class="mono">IMG_2845.JPG</td><td class="mono">travel_005.jpg</td><td class="st-ok">Will rename</td></tr>
+        </tbody>
+      </table>
+      <div class="mock-foot good">Preview complete: 5 files will be renamed, 0 unchanged. Nothing has been touched yet.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CONFLICT ================= -->
+<section id="safety">
+  <div class="wrap">
+    <h2>And this is what happens when something would collide</h2>
+    <p class="sub">Two files mapping to the same new name is the #1 way bulk renamers destroy data. BatchRenamer doesn't pick a winner — it stops.</p>
+
+    <div class="mock">
+      <div class="mock-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span style="margin-left:10px">BatchRenamer 1.0.0 — D:\Photos\2026-trip</span>
+      </div>
+      <table>
+        <thead>
+          <tr><th style="width:44px">#</th><th>Old name</th><th>New name</th><th style="width:110px">Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td class="mono">a_1.txt</td><td class="mono">x.txt</td><td class="st-ok">Will rename</td></tr>
+          <tr class="row-bad"><td>2</td><td class="mono">b_1.txt</td><td class="mono">x.txt</td><td class="st-no">Collision</td></tr>
+          <tr class="row-bad"><td>!</td><td class="mono">—</td><td class="mono">—</td><td class="st-no">Refused</td></tr>
+        </tbody>
+      </table>
+      <div class="mock-foot bad">
+        Conflict: 2 files would resolve to the same name "x.txt" (a_1.txt, b_1.txt). Refused — no file was touched. <b>Execute button is disabled.</b>
+      </div>
+    </div>
+
+    <div style="height:26px"></div>
+
+    <ul class="never">
+      <li><span class="x">✕</span><span><b>Never overwrites silently.</b> Same-name collisions are refused, with the offending files listed by name.</span></li>
+      <li><span class="x">✕</span><span><b>Never touches files outside your batch.</b> If a target name is taken by a file you didn't select, the run is refused.</span></li>
+      <li><span class="x">✕</span><span><b>Never modifies file contents.</b> It only calls the OS rename operation. Verified with SHA-256 before/after in tests.</span></li>
+      <li><span class="x">✕</span><span><b>Never changes anything before you click Execute.</b> The preview path is read-only by construction.</span></li>
+      <li><span class="x">✕</span><span><b>Never leaves a half-finished batch.</b> Mid-run failures roll back automatically — all or nothing.</span></li>
+      <li><span class="x">✕</span><span><b>Never phones home.</b> Zero network code. No telemetry, no license server, no auto-update.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ================= HOW ================= -->
+<section id="how">
+  <div class="wrap">
+    <h2>Three steps. One rule: nothing changes until you say so.</h2>
+    <p class="sub">The whole workflow fits in one window. No wizard, no tabs, no "advanced mode".</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h3>Pick a folder</h3>
+          <p>Optionally include subfolders, filter by extension (<code>jpg,png</code>), or by glob pattern. Hidden files and <code>undo.json</code> are skipped automatically.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Preview the full table</h3>
+          <p>Every file gets a row: old name, new name, status. Changed rows are highlighted. If anything is wrong, the Execute button stays greyed out and the status bar tells you exactly why.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Execute — or undo</h3>
+          <p>One confirmation dialog, then the rename happens and <code>undo.json</code> is written. Don't like the result? One click restores every filename, byte-for-byte.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEATURES ================= -->
+<section id="features">
+  <div class="wrap">
+    <h2>Rules you can combine freely</h2>
+    <p class="sub">Execution order is fixed and predictable: <code>unify name → find/replace → numbering → prefix/suffix → extension</code>.</p>
+
+    <div class="grid">
+      <div class="card">
+        <h3><span class="ico">🔎</span> Find &amp; replace</h3>
+        <p>Plain text or full regex with backreferences (<code>\1</code>, <code>\2</code>). Optional case-insensitive matching.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🔢</span> Zero-padded numbering</h3>
+        <p>Set start, step, padding width, separator, and whether the number goes before or after the name. <code>_001</code>, <code>_002</code>, <code>_003</code>…</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">📁</span> Per-folder numbering</h3>
+        <p>Recursing into subfolders? Each folder can restart its own counter, or the whole batch can number continuously.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🔤</span> Prefix / suffix / unify</h3>
+        <p>Add text around the stem, or replace the whole stem with a fixed word. Prefixes land before the stem, never after the extension.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">📎</span> Extension handling</h3>
+        <p>Keep as-is, unify case (<code>.JPG</code> → <code>.jpg</code>), or strip entirely. Case-only renames are handled correctly on Windows.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ico">🛡️</span> Windows name validation</h3>
+        <p>Blocks illegal characters, reserved device names (<code>CON</code>, <code>COM1</code>, <code>LPT9</code>…), trailing spaces/periods, and over-length names before they hit the filesystem.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CLI ================= -->
+<section id="cli">
+  <div class="wrap">
+    <h2>Same logic, command line</h2>
+    <p class="sub">For scripting, CI, or just people who live in a terminal. The CLI shares the entire core with the GUI — the preview is identical.</p>
+
+<pre><code># Preview only. Touches nothing.
+python main.py --cli "D:\photos" --find IMG --repl travel --seq --seq-pad 3 --dry-run
+
+# Looks right? Run it (asks y/N first).
+python main.py --cli "D:\photos" --find IMG --repl travel --seq --seq-pad 3
+
+# Unattended, for scripts
+python main.py --cli "D:\photos" --find IMG --repl travel --seq --yes
+
+# Regex with backreference + unify extension case
+python main.py --cli "D:\photos" --regex --find "^(IMG)_(\d+)" --repl "travel_\2" --set-ext jpg --dry-run
+
+# Undo the last run
+python main.py --cli --undo "D:\photos\undo.json"</code></pre>
+
+    <p class="sub" style="margin-top:22px">
+      Exit codes: <code>0</code> success · <code>1</code> refused (conflict) · <code>2</code> usage error.
+      Add <code>--json</code> for machine-readable preview and results.
+    </p>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section id="faq">
+  <div class="wrap">
+    <h2>Questions</h2>
+    <p class="sub">The ones people actually ask before buying a file tool.</p>
+
+    <details open>
+      <summary>Do I need to know Python?</summary>
+      <p>You need Python installed (3.9+, the official Windows installer includes everything needed). Setup is about one minute: download, tick "Add python.exe to PATH", done. The README walks you through it with the one checkbox people miss. After that it's a double-click.</p>
+    </details>
+    <details>
+      <summary>Will it overwrite my files?</summary>
+      <p>No — by design, and that's tested. If two files would end up with the same name, the run is refused and the colliding files are named. If a target name is taken by a file outside your batch, the run is refused too. There is no "overwrite anyway" option.</p>
+    </details>
+    <details>
+      <summary>Does it change file contents?</summary>
+      <p>No. It only calls the operating system's rename operation. The test suite verifies this by comparing SHA-256 hashes of every file before rename and after undo — they must match exactly.</p>
+    </details>
+    <details>
+      <summary>How many files can it handle at once?</summary>
+      <p>No hard limit. 1000+ files previews in well under a second on a normal machine. Your disk is the bottleneck, not the tool.</p>
+    </details>
+    <details>
+      <summary>Can I undo after closing the app?</summary>
+      <p>Yes. <code>undo.json</code> is written to the folder you renamed in. Reopen the app, click Undo, pick that file — or run <code>python main.py --cli --undo &lt;file&gt;</code>. As long as the files are still where the rename left them, everything comes back.</p>
+    </details>
+    <details>
+      <summary>Mac or Linux?</summary>
+      <p>The core logic is cross-platform, but filename validation and the entire test suite target Windows rules. It may work elsewhere; it isn't supported there. Please don't buy it for macOS.</p>
+    </details>
+    <details>
+      <summary>Do I need admin rights? Does it need internet?</summary>
+      <p>Neither. No installer, no services, no registry changes. Unzip, run. There is no network code in the program at all.</p>
+    </details>
+    <details>
+      <summary>What if it won't start?</summary>
+      <p>Run <code>python main.py --selftest</code> first — it validates the preview → rename → undo chain without opening a window. If that passes, the issue is a parameter. If it fails, email me within 14 days with your Windows version and the error; full refund.</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= BUY ================= -->
+<section id="buy">
+  <div class="wrap">
+    <div class="buy">
+      <div style="font-size:14px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase">Personal license</div>
+      <div class="amount">$9.99 <small>USD · one-time</small></div>
+      <div style="color:var(--muted); font-size:15px">BatchRenamer 1.0.0 · Windows 10/11 · Python 3.9+</div>
+
+      <ul>
+        <li>Full source code — readable, editable, no obfuscation</li>
+        <li>40-test suite with a negative control that proves the conflict tests are real</li>
+        <li>Buyer README: 3-minute setup, full CLI reference, FAQ</li>
+        <li>Plain-language commercial license — use it in your paid work</li>
+        <li>Free updates within 1.x</li>
+      </ul>
+
+      <a class="btn btn-primary" href="#" id="buy-link">Buy on Gumroad →</a>
+      <p class="fine">
+        Instant download. No subscription, no account required to run it.<br>
+        14-day refund if it won't start on your machine and the README can't fix it.
+      </p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-row">
+    <div>© 2026 BatchRenamer · <a href="https://github.com/" rel="noopener">Source &amp; docs</a></div>
+    <div>Windows 10/11 · Python 3.9+ · No telemetry</div>
+  </div>
+</footer>
+
+<script>
+  // 单文件、无外部依赖：这里只做一件事——把购买链接指到实际商品页。
+  // 上架后把 PLACEHOLDER 换成真实的 Gumroad URL 即可。
+  (function () {
+    var GUMROAD_URL = "PLACEHOLDER_REPLACE_WITH_YOUR_GUMROAD_URL";
+    var a = document.getElementById("buy-link");
+    if (a && GUMROAD_URL.indexOf("PLACEHOLDER") !== 0) {
+      a.href = GUMROAD_URL;
+    } else if (a) {
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        alert("Listing URL not configured yet.\nEdit landing/index.html and set GUMROAD_URL.");
+      });
+    }
+  })();
+</script>
+
+</body>
+</html>
